@@ -41,11 +41,14 @@ interface Beneficiario {
   estado_civil: string
   numero_hijos: string
   convive_con: string
-  redes_apoyo: string[]
+  apoyo_social_personas: number | null
+  apoyo_social_interes: number | null
+  apoyo_social_vecinos: number | null
+  apoyo_social_puntaje: number | null
+  apoyo_social_nivel: string | null
   escolaridad: string
   usa_computador: string
   ocupacion: string
-  apoyo_salud_mental: string
   alimentacion: string
   practica_deporte: string
   cual_deporte: string
@@ -89,11 +92,12 @@ export function BeneficiaryFormEdit({ beneficiario, onSuccess, onCancel }: Benef
     estadoCivil: beneficiario.estado_civil,
     numeroHijos: beneficiario.numero_hijos,
     conviveCon: beneficiario.convive_con,
-    redesApoyo: beneficiario.redes_apoyo || [],
+    apoyoSocialPersonas: beneficiario.apoyo_social_personas ? String(beneficiario.apoyo_social_personas) : "",
+    apoyoSocialInteres: beneficiario.apoyo_social_interes ? String(beneficiario.apoyo_social_interes) : "",
+    apoyoSocialAyudaVecinos: beneficiario.apoyo_social_vecinos ? String(beneficiario.apoyo_social_vecinos) : "",
     escolaridad: beneficiario.escolaridad,
     usaComputador: beneficiario.usa_computador,
     ocupacion: beneficiario.ocupacion,
-    apoyoSaludMental: beneficiario.apoyo_salud_mental,
     alimentacion: beneficiario.alimentacion,
     practicaDeporte: beneficiario.practica_deporte,
     cualDeporte: beneficiario.cual_deporte,
@@ -123,7 +127,29 @@ export function BeneficiaryFormEdit({ beneficiario, onSuccess, onCancel }: Benef
 
     try {
       const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "")
-      const formDataToSend = { ...formData, genero: formData.genero ? capitalize(formData.genero) : "" }
+      const socialSupportResponses = [
+        formData.apoyoSocialPersonas,
+        formData.apoyoSocialInteres,
+        formData.apoyoSocialAyudaVecinos,
+      ]
+      const hasCompleteSocialSupport = socialSupportResponses.every((value) => value)
+      const socialSupportScore = hasCompleteSocialSupport
+        ? socialSupportResponses.reduce((total, value) => total + Number(value), 0)
+        : null
+      const socialSupportLevel =
+        socialSupportScore === null
+          ? null
+          : socialSupportScore <= 8
+            ? "Bajo apoyo social"
+            : socialSupportScore <= 11
+              ? "Apoyo social moderado"
+              : "Alto apoyo social"
+      const formDataToSend = {
+        ...formData,
+        genero: formData.genero ? capitalize(formData.genero) : "",
+        apoyoSocialPuntaje: socialSupportScore,
+        apoyoSocialNivel: socialSupportLevel,
+      }
 
       const response = await fetch(`/api/beneficiarios/${beneficiario.id}`, {
         method: "PUT",

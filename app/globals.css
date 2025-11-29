@@ -122,4 +122,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  [data-nextjs-dev-tools-button],
+  #nextjs-dev-tools-menu,
+  [data-nextjs-toast] {
+    display: none !important;
+  }
 }

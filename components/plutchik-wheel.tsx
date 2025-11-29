@@ -96,7 +96,6 @@ export function PlutchikWheel({ selectedEmotions, onEmotionsChange }: PlutchikWh
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Selected emotions display */}
         {selectedEmotions.length > 0 && (
           <div className="p-4 bg-muted rounded-lg">
             <p className="text-sm font-medium mb-2">Emociones seleccionadas:</p>
@@ -115,7 +114,6 @@ export function PlutchikWheel({ selectedEmotions, onEmotionsChange }: PlutchikWh
           </div>
         )}
 
-        {/* Emotion grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {emotions.map((emotion) => (
             <div key={emotion.name} className="space-y-2">
@@ -127,7 +125,6 @@ export function PlutchikWheel({ selectedEmotions, onEmotionsChange }: PlutchikWh
                 {emotion.name}
               </button>
 
-              {/* Intensity levels */}
               {expandedEmotion === emotion.name && (
                 <div className="space-y-1 animate-in slide-in-from-top-2">
                   {emotion.intensity.map((level, index) => {
@@ -152,6 +149,29 @@ export function PlutchikWheel({ selectedEmotions, onEmotionsChange }: PlutchikWh
               )}
             </div>
           ))}
+        </div>
+
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            La rueda de las emociones de Plutchik describe ocho emociones básicas que se combinan para explicar la
+            amplitud de la experiencia humana. Es una herramienta utilizada en procesos terapéuticos, educación
+            emocional, investigación psicológica e incluso disciplinas creativas como el diseño o el copywriting.
+          </p>
+          <p className="font-medium text-foreground">Emociones básicas propuestas por Plutchik:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Alegría</li>
+            <li>Confianza</li>
+            <li>Miedo</li>
+            <li>Sorpresa</li>
+            <li>Tristeza</li>
+            <li>Disgusto</li>
+            <li>Ira</li>
+            <li>Anticipación</li>
+          </ul>
+          <p>
+            Cada emoción tiene un opuesto directo y puede intensificarse o combinarse con otras para formar emociones
+            secundarias, lo que facilita una conversación más matizada sobre el estado emocional del beneficiario.
+          </p>
         </div>
 
         <div className="text-sm text-muted-foreground space-y-1">

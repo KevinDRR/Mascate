@@ -16,7 +16,6 @@ import { PlutchikWheel } from "./plutchik-wheel"
 
 export function BeneficiaryForm() {
   const [formData, setFormData] = useState({
-    // Sección 1: Datos de Registro
     fecha: "",
     hora: "",
     casoNumero: "",
@@ -26,7 +25,6 @@ export function BeneficiaryForm() {
     localidad: "",
     barrio: "",
 
-    // Sección 2: Información del Beneficiario
     mismoBeneficiario: "",
     fuenteNombre: "",
     fuenteVinculo: "",
@@ -39,42 +37,36 @@ export function BeneficiaryForm() {
     grupoEtnico: "",
     poblacionesEspeciales: [] as string[],
 
-    // Sección 3: Entorno Familiar
     estadoCivil: "",
     numeroHijos: "",
     conviveCon: "",
-    redesApoyo: [] as string[],
+    apoyoSocialPersonas: "",
+    apoyoSocialInteres: "",
+    apoyoSocialAyudaVecinos: "",
 
-    // Sección 4: Educación y Ocupación
     escolaridad: "",
     usaComputador: "",
     ocupacion: "",
 
-    // Sección 5: Bienestar
-    apoyoSaludMental: "",
     alimentacion: "",
     practicaDeporte: "",
     cualDeporte: "",
     participacionComunitaria: "",
     haParticipado: "",
 
-    // Sección 6: Situaciones Presentes
     situacionesSalud: [] as string[],
     situacionesConsumo: [] as string[],
     situacionesEntorno: [] as string[],
     situacionesEconomicas: [] as string[],
     situacionesLegales: [] as string[],
 
-    // Sección 7: Peticiones
     peticionesApoyo: [] as string[],
     peticionesNecesidades: [] as string[],
     peticionesCapacitacion: [] as string[],
     peticionesAsesoria: [] as string[],
 
-    // Sección 8: Descripción
     descripcionCaso: "",
 
-    // Sección 9: Quien Diligencia
     nombreDiligencia: "",
     rolDiligencia: "",
     telefonoDiligencia: "",
@@ -84,6 +76,24 @@ export function BeneficiaryForm() {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+
+  const socialSupportResponses = [
+    formData.apoyoSocialPersonas,
+    formData.apoyoSocialInteres,
+    formData.apoyoSocialAyudaVecinos,
+  ]
+  const hasCompleteSocialSupport = socialSupportResponses.every((value) => value)
+  const socialSupportScore = hasCompleteSocialSupport
+    ? socialSupportResponses.reduce((total, value) => total + Number(value), 0)
+    : null
+  const socialSupportLevel =
+    socialSupportScore === null
+      ? null
+      : socialSupportScore <= 8
+        ? "Bajo apoyo social"
+        : socialSupportScore <= 11
+          ? "Apoyo social moderado"
+          : "Alto apoyo social"
 
   useEffect(() => {
     const fetchNextCaseNumber = async () => {
@@ -99,7 +109,6 @@ export function BeneficiaryForm() {
         }
       } catch (error) {
         console.error("[v0] Error fetching next case number:", error)
-        // Si hay error, empezar desde 1
         setFormData((prev) => ({
           ...prev,
           casoNumero: "1",
@@ -116,11 +125,12 @@ export function BeneficiaryForm() {
     setSubmitSuccess(false)
 
     try {
-      // Guardar género con primera letra en mayúscula
       const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "")
       const formDataToSend = {
         ...formData,
         genero: formData.genero ? capitalize(formData.genero) : "",
+        apoyoSocialPuntaje: socialSupportScore,
+        apoyoSocialNivel: socialSupportLevel,
       }
       const response = await fetch("/api/beneficiarios", {
         method: "POST",
@@ -140,7 +150,6 @@ export function BeneficiaryForm() {
       setSubmitSuccess(true)
       alert("Formulario guardado exitosamente en la base de datos")
 
-      // Reset form after successful submission
       window.location.reload()
     } catch (error) {
       console.error("[v0] Error submitting form:", error)
@@ -162,7 +171,6 @@ export function BeneficiaryForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Sección 1: Datos de Registro del Contacto */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -291,7 +299,6 @@ export function BeneficiaryForm() {
         </CardContent>
       </Card>
 
-      {/* Sección 2: Información del Beneficiario */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -455,7 +462,6 @@ export function BeneficiaryForm() {
         </CardContent>
       </Card>
 
-      {/* Sección 3: Entorno Familiar y Social */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -522,27 +528,93 @@ export function BeneficiaryForm() {
             </Select>
           </div>
 
-          <div className="space-y-3">
-            <Label>Redes de apoyo con las que cuenta</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {["Familia", "Amigos", "Comunidad", "Institución", "Ninguna"].map((item) => (
-                <div key={item} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`red-${item}`}
-                    checked={formData.redesApoyo.includes(item)}
-                    onCheckedChange={() => handleCheckboxChange("redesApoyo", item)}
-                  />
-                  <Label htmlFor={`red-${item}`} className="font-normal cursor-pointer">
-                    {item}
-                  </Label>
-                </div>
-              ))}
+          <div className="space-y-4">
+            <p className="text-sm font-semibold">Percepción del apoyo social</p>
+
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <p className="text-sm font-medium">
+                  ¿Cuántas personas son tan cercanas a ti que puedes contar con ellas si tienes grandes problemas
+                  personales?
+                </p>
+                <RadioGroup
+                  value={formData.apoyoSocialPersonas}
+                  onValueChange={(value) => setFormData({ ...formData, apoyoSocialPersonas: value })}
+                >
+                  {[
+                    { value: "1", label: "1. Ninguna" },
+                    { value: "2", label: "2. 1-2" },
+                    { value: "3", label: "3. 3-5" },
+                    { value: "4", label: "4. 5 o 7" },
+                    { value: "5", label: "5. 7 o más" },
+                  ].map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <RadioGroupItem value={option.value} id={`apoyo-personas-${option.value}`} />
+                      <Label htmlFor={`apoyo-personas-${option.value}`} className="font-normal cursor-pointer">
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-sm font-medium">¿Cuánto interés y preocupación muestra la gente por lo que haces?</p>
+                <RadioGroup
+                  value={formData.apoyoSocialInteres}
+                  onValueChange={(value) => setFormData({ ...formData, apoyoSocialInteres: value })}
+                >
+                  {[
+                    { value: "1", label: "1. Ninguna" },
+                    { value: "2", label: "2. Poco" },
+                    { value: "3", label: "3. Incierto" },
+                    { value: "4", label: "4. Algo" },
+                    { value: "5", label: "5. Mucho" },
+                  ].map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <RadioGroupItem value={option.value} id={`apoyo-interes-${option.value}`} />
+                      <Label htmlFor={`apoyo-interes-${option.value}`} className="font-normal cursor-pointer">
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-sm font-medium">¿Qué tan fácil es obtener ayuda práctica de los vecinos si la necesitaras?</p>
+                <RadioGroup
+                  value={formData.apoyoSocialAyudaVecinos}
+                  onValueChange={(value) => setFormData({ ...formData, apoyoSocialAyudaVecinos: value })}
+                >
+                  {[
+                    { value: "1", label: "1. Muy difícil" },
+                    { value: "2", label: "2. Difícil" },
+                    { value: "3", label: "3. Posible" },
+                    { value: "4", label: "4. Fácil" },
+                    { value: "5", label: "5. Muy fácil" },
+                  ].map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <RadioGroupItem value={option.value} id={`apoyo-vecinos-${option.value}`} />
+                      <Label htmlFor={`apoyo-vecinos-${option.value}`} className="font-normal cursor-pointer">
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
             </div>
+
+            {socialSupportLevel && socialSupportScore !== null && (
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm font-semibold">{socialSupportLevel}</p>
+                <p className="text-xs text-muted-foreground">Puntaje obtenido: {socialSupportScore} (escala 3-15)</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Sección 4: Educación y Ocupación */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -624,7 +696,6 @@ export function BeneficiaryForm() {
         </CardContent>
       </Card>
 
-      {/* Sección 5: Bienestar y Estilo de Vida */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -633,28 +704,11 @@ export function BeneficiaryForm() {
             </div>
             <div>
               <CardTitle>5. Bienestar y Estilo de Vida</CardTitle>
-              <CardDescription>Salud mental, alimentación y participación comunitaria</CardDescription>
+              <CardDescription>Hábitos de bienestar, alimentación y participación comunitaria</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="apoyoSaludMental">Apoyo en salud mental</Label>
-            <Select
-              value={formData.apoyoSaludMental}
-              onValueChange={(value) => setFormData({ ...formData, apoyoSaludMental: value })}
-            >
-              <SelectTrigger id="apoyoSaludMental">
-                <SelectValue placeholder="Seleccione..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="nunca">Nunca ha recibido</SelectItem>
-                <SelectItem value="pasado">Recibió en el pasado</SelectItem>
-                <SelectItem value="actual">Recibe actualmente</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="space-y-3">
             <Label>Alimentación</Label>
             <RadioGroup
@@ -711,48 +765,53 @@ export function BeneficiaryForm() {
           )}
 
           <div className="space-y-3">
-            <Label>Participación comunitaria - ¿Conoce espacios comunitarios?</Label>
-            <RadioGroup
-              value={formData.participacionComunitaria}
-              onValueChange={(value) => setFormData({ ...formData, participacionComunitaria: value })}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="si" id="participa-si" />
-                <Label htmlFor="participa-si" className="font-normal cursor-pointer">
-                  Sí
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="no" id="participa-no" />
-                <Label htmlFor="participa-no" className="font-normal cursor-pointer">
-                  No
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {formData.participacionComunitaria === "si" && (
+            <Label>Participación comunitaria</Label>
             <div className="space-y-3">
-              <Label>¿Ha participado?</Label>
-              <RadioGroup
-                value={formData.haParticipado}
-                onValueChange={(value) => setFormData({ ...formData, haParticipado: value })}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="si" id="ha-participado-si" />
-                  <Label htmlFor="ha-participado-si" className="font-normal cursor-pointer">
-                    Sí
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="ha-participado-no" />
-                  <Label htmlFor="ha-participado-no" className="font-normal cursor-pointer">
-                    No
-                  </Label>
-                </div>
-              </RadioGroup>
+              <div className="space-y-2">
+                <p className="text-sm font-medium">¿Conoce los espacios de participación en su comunidad?</p>
+                <RadioGroup
+                  value={formData.participacionComunitaria}
+                  onValueChange={(value) => setFormData({ ...formData, participacionComunitaria: value })}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="si" id="participa-si" />
+                    <Label htmlFor="participa-si" className="font-normal cursor-pointer">
+                      Sí
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="participa-no" />
+                    <Label htmlFor="participa-no" className="font-normal cursor-pointer">
+                      No
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">
+                  ¿Ha participado en las decisiones comunitarias locales o municipales de alguna manera?
+                </p>
+                <RadioGroup
+                  value={formData.haParticipado}
+                  onValueChange={(value) => setFormData({ ...formData, haParticipado: value })}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="si" id="ha-participado-si" />
+                    <Label htmlFor="ha-participado-si" className="font-normal cursor-pointer">
+                      Sí
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="ha-participado-no" />
+                    <Label htmlFor="ha-participado-no" className="font-normal cursor-pointer">
+                      No
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 
@@ -761,7 +820,6 @@ export function BeneficiaryForm() {
         onEmotionsChange={(emotions) => setFormData({ ...formData, emociones: emotions })}
       />
 
-      {/* Sección 6: Situaciones Presentes */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -876,7 +934,6 @@ export function BeneficiaryForm() {
         </CardContent>
       </Card>
 
-      {/* Sección 7: Peticiones y Necesidades */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -966,7 +1023,6 @@ export function BeneficiaryForm() {
         </CardContent>
       </Card>
 
-      {/* Sección 8: Descripción Abierta del Caso */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -994,7 +1050,6 @@ export function BeneficiaryForm() {
         </CardContent>
       </Card>
 
-      {/* Sección 9: Datos de Quien Diligencia */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -1046,7 +1101,6 @@ export function BeneficiaryForm() {
         </CardContent>
       </Card>
 
-      {/* Botón de Envío */}
       <div className="flex justify-end gap-4">
         <Button type="button" variant="outline" onClick={() => window.location.reload()} disabled={isSubmitting}>
           Cancelar

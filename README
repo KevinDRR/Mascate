@@ -4,6 +4,9 @@ npm install -g pnpm
 #Descargar todas las dependencias que el proyecto necesita
 pnpm install
 
+#Iniciar entorno
+venv\Scripts\Activate.ps1
+
 #Iniciar el proyecto
 npm run dev
 

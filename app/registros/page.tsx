@@ -61,7 +61,6 @@ export default async function RegistrosPage() {
           </Button>
         </div>
 
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-3 bg-primary/10 rounded-lg">
@@ -74,7 +73,6 @@ export default async function RegistrosPage() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">

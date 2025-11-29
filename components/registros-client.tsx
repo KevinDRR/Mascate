@@ -53,11 +53,14 @@ interface Beneficiario {
   estado_civil: string
   numero_hijos: string
   convive_con: string
-  redes_apoyo: string[]
+  apoyo_social_personas: number | null
+  apoyo_social_interes: number | null
+  apoyo_social_vecinos: number | null
+  apoyo_social_puntaje: number | null
+  apoyo_social_nivel: string | null
   escolaridad: string
   usa_computador: string
   ocupacion: string
-  apoyo_salud_mental: string
   alimentacion: string
   practica_deporte: string
   cual_deporte: string
@@ -98,7 +101,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
     return timeString.slice(0, 5)
   }
 
-  // Filter beneficiarios based on search term
   const filteredBeneficiarios = beneficiarios.filter((beneficiario) => {
     const searchLower = searchTerm.toLowerCase()
     return (
@@ -141,7 +143,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
         throw new Error(result.error || "Error al eliminar el beneficiario")
       }
 
-      // Remove from local state
       setBeneficiarios((prev) => prev.filter((b) => b.id !== beneficiarioToDelete))
       setDeleteDialogOpen(false)
       setBeneficiarioToDelete(null)
@@ -161,7 +162,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
 
   return (
     <>
-      {/* Search Bar */}
       <div className="mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -180,7 +180,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
         )}
       </div>
 
-      {/* Records List */}
       {error && (
         <Card className="mb-4 border-destructive">
           <CardContent className="pt-6">
@@ -206,7 +205,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
       ) : (
         <div className="space-y-4">
           {filteredBeneficiarios.map((beneficiario: Beneficiario) => {
-            // Defensive parsing: MySQL driver may return JSON columns as strings
             const emociones = (Array.isArray(beneficiario.emociones)
               ? beneficiario.emociones
               : safeParseJson<any[]>(beneficiario.emociones) || []
@@ -260,6 +258,15 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
               ...situaciones_legales,
             ]
 
+            const apoyo_social_nivel =
+              typeof beneficiario.apoyo_social_nivel === "string" && beneficiario.apoyo_social_nivel
+                ? beneficiario.apoyo_social_nivel
+                : null
+            const apoyo_social_puntaje =
+              beneficiario.apoyo_social_puntaje !== null && beneficiario.apoyo_social_puntaje !== undefined
+                ? Number(beneficiario.apoyo_social_puntaje)
+                : null
+
             return (
               <Card key={beneficiario.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -307,7 +314,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Información básica */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-semibold">Género:</span> {beneficiario.genero || "No especificado"}
@@ -318,7 +324,15 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
                   </div>
                 </div>
 
-                {/* Emociones */}
+                {apoyo_social_nivel && apoyo_social_puntaje !== null && (
+                  <div className="pt-2">
+                    <p className="font-semibold text-sm mb-1">Apoyo social percibido</p>
+                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                      {apoyo_social_nivel} · Puntaje {apoyo_social_puntaje}/15
+                    </Badge>
+                  </div>
+                )}
+
                 {emociones && emociones.length > 0 && (
                   <div>
                     <p className="font-semibold text-sm mb-2">Emociones identificadas:</p>
@@ -336,7 +350,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
                   </div>
                 )}
 
-                {/* Poblaciones especiales */}
                 {poblaciones_especiales && poblaciones_especiales.length > 0 && (
                   <div>
                     <p className="font-semibold text-sm mb-2">Poblaciones especiales:</p>
@@ -350,7 +363,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
                   </div>
                 )}
 
-                {/* Situaciones presentes */}
                 {situaciones_all.length > 0 && (
                   <div>
                     <p className="font-semibold text-sm mb-2">Situaciones presentes:</p>
@@ -364,7 +376,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
                   </div>
                 )}
 
-                {/* Peticiones */}
                 {(peticiones_apoyo.length || peticiones_necesidades.length || peticiones_capacitacion.length || peticiones_asesoria.length) > 0 && (
                   <div>
                     <p className="font-semibold text-sm mb-2">Peticiones y necesidades:</p>
@@ -378,7 +389,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
                   </div>
                 )}
 
-                {/* Descripción del caso */}
                 {beneficiario.descripcion_caso && (
                   <div className="pt-4 border-t">
                     <p className="font-semibold text-sm mb-2">Descripción del caso:</p>
@@ -386,7 +396,6 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
                   </div>
                 )}
 
-                {/* Quien diligencia */}
                 <div className="pt-4 border-t flex items-center gap-2 text-sm text-muted-foreground">
                   <User className="h-4 w-4" />
                   <span>

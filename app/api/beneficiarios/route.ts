@@ -5,7 +5,6 @@ export async function POST(request: Request) {
   try {
     const data = await request.json()
 
-    // Transformar los nombres de campos de camelCase a snake_case
     const beneficiarioData = [
       data.fecha,
       data.hora,
@@ -29,11 +28,18 @@ export async function POST(request: Request) {
       data.estadoCivil,
       data.numeroHijos,
       data.conviveCon,
-      JSON.stringify(data.redesApoyo || []),
+      data.apoyoSocialPersonas ? Number(data.apoyoSocialPersonas) : null,
+      data.apoyoSocialInteres ? Number(data.apoyoSocialInteres) : null,
+      data.apoyoSocialAyudaVecinos ? Number(data.apoyoSocialAyudaVecinos) : null,
+      typeof data.apoyoSocialPuntaje === "number"
+        ? data.apoyoSocialPuntaje
+        : data.apoyoSocialPuntaje
+          ? Number(data.apoyoSocialPuntaje)
+          : null,
+      data.apoyoSocialNivel || null,
       data.escolaridad,
       data.usaComputador,
       data.ocupacion,
-      data.apoyoSaludMental,
       data.alimentacion,
       data.practicaDeporte,
       data.cualDeporte,
@@ -55,12 +61,12 @@ export async function POST(request: Request) {
       JSON.stringify(data.emociones || []),
     ]
 
-    // NOTE: Ajusta la lista de columnas si tu tabla tiene una columna id o created_at autogenerada
     const sql = `INSERT INTO beneficiarios (
       fecha,hora,caso_numero,forma_contacto,tipo_contacto,lugar_contacto,localidad,barrio,mismo_beneficiario,
       fuente_nombre,fuente_vinculo,fuente_telefono,nombre_apellido,fecha_nacimiento,genero,direccion,telefono,
-      grupo_etnico,poblaciones_especiales,estado_civil,numero_hijos,convive_con,redes_apoyo,escolaridad,usa_computador,
-      ocupacion,apoyo_salud_mental,alimentacion,practica_deporte,cual_deporte,participacion_comunitaria,ha_participado,
+      grupo_etnico,poblaciones_especiales,estado_civil,numero_hijos,convive_con,apoyo_social_personas,apoyo_social_interes,
+      apoyo_social_vecinos,apoyo_social_puntaje,apoyo_social_nivel,escolaridad,usa_computador,
+      ocupacion,alimentacion,practica_deporte,cual_deporte,participacion_comunitaria,ha_participado,
       situaciones_salud,situaciones_consumo,situaciones_entorno,situaciones_economicas,situaciones_legales,
       peticiones_apoyo,peticiones_necesidades,peticiones_capacitacion,peticiones_asesoria,descripcion_caso,
       nombre_diligencia,rol_diligencia,telefono_diligencia,emociones

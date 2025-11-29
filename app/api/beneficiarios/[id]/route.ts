@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/mysql/client"
 
-// GET - Obtener un beneficiario específico
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = params
@@ -13,7 +12,6 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-// PUT - Actualizar un beneficiario
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = params
@@ -42,11 +40,19 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       estado_civil: data.estadoCivil,
       numero_hijos: data.numeroHijos,
       convive_con: data.conviveCon,
-      redes_apoyo: data.redesApoyo,
+      apoyo_social_personas: data.apoyoSocialPersonas ? Number(data.apoyoSocialPersonas) : null,
+      apoyo_social_interes: data.apoyoSocialInteres ? Number(data.apoyoSocialInteres) : null,
+      apoyo_social_vecinos: data.apoyoSocialAyudaVecinos ? Number(data.apoyoSocialAyudaVecinos) : null,
+      apoyo_social_puntaje:
+        typeof data.apoyoSocialPuntaje === "number"
+          ? data.apoyoSocialPuntaje
+          : data.apoyoSocialPuntaje
+            ? Number(data.apoyoSocialPuntaje)
+            : null,
+      apoyo_social_nivel: data.apoyoSocialNivel || null,
       escolaridad: data.escolaridad,
       usa_computador: data.usaComputador,
       ocupacion: data.ocupacion,
-      apoyo_salud_mental: data.apoyoSaludMental,
       alimentacion: data.alimentacion,
       practica_deporte: data.practicaDeporte,
       cual_deporte: data.cualDeporte,
@@ -93,7 +99,6 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-// DELETE - Eliminar un beneficiario
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = params

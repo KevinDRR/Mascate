@@ -47,7 +47,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
   const estadisticas = useMemo(() => {
     const total = beneficiarios.length
 
-    // Distribución por género
     const generos = beneficiarios.reduce(
       (acc, b) => {
         const genero = b.genero || "No especificado"
@@ -57,7 +56,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
       {} as Record<string, number>,
     )
 
-    // Distribución por edad
     const edades = beneficiarios
       .filter((b) => b.fecha_nacimiento)
       .map((b) => {
@@ -74,7 +72,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
       "65+": edades.filter((e) => e >= 65).length,
     }
 
-    // Distribución por localidad
     const localidades = beneficiarios.reduce(
       (acc, b) => {
         const localidad = b.localidad || "No especificado"
@@ -84,12 +81,10 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
       {} as Record<string, number>,
     )
 
-    // Top 5 localidades
     const topLocalidades = Object.entries(localidades)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
 
-    // Situaciones más comunes
     const todasSituaciones: string[] = []
     beneficiarios.forEach((b) => {
       todasSituaciones.push(
@@ -113,7 +108,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
 
-    // Peticiones más frecuentes
     const todasPeticiones: string[] = []
     beneficiarios.forEach((b) => {
       todasPeticiones.push(
@@ -136,7 +130,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
 
-    // Distribución por ocupación
     const ocupaciones = beneficiarios.reduce(
       (acc, b) => {
         const ocupacion = b.ocupacion || "No especificado"
@@ -146,7 +139,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
       {} as Record<string, number>,
     )
 
-    // Distribución por escolaridad
     const escolaridades = beneficiarios.reduce(
       (acc, b) => {
         const escolaridad = b.escolaridad || "No especificado"
@@ -172,7 +164,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
 
   return (
     <div className="space-y-6">
-      {/* Resumen General */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
@@ -223,7 +214,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
         </Card>
       </div>
 
-      {/* Distribución por Género */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -243,7 +233,7 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${((percent as number) * 100).toFixed(0)}%`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
@@ -278,7 +268,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
         </CardContent>
       </Card>
 
-      {/* Distribución por Edad */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -327,7 +316,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
         </CardContent>
       </Card>
 
-      {/* Top Localidades */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -371,7 +359,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
         </CardContent>
       </Card>
 
-      {/* Situaciones Más Comunes */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -413,7 +400,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
         </CardContent>
       </Card>
 
-      {/* Peticiones Más Frecuentes */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -455,7 +441,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
         </CardContent>
       </Card>
 
-      {/* Distribución por Ocupación */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -490,7 +475,6 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
         </CardContent>
       </Card>
 
-      {/* Distribución por Escolaridad */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
