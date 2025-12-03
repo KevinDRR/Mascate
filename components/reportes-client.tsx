@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, TrendingUp, MapPin, Heart, AlertCircle, FileText } from "lucide-react"
+import { safeParseJson } from "@/lib/utils"
 import { useMemo } from "react"
 import {
   BarChart,
@@ -41,6 +42,32 @@ interface Beneficiario {
 
 interface ReportesClientProps {
   beneficiarios: Beneficiario[]
+}
+
+function ensureStringArray(value: unknown): string[] {
+  if (!value) return []
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === "string" ? item : item == null ? "" : String(item)))
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+
+  if (typeof value === "string") {
+    const parsed = safeParseJson<unknown>(value.trim())
+    if (Array.isArray(parsed)) {
+      return ensureStringArray(parsed)
+    }
+    return value.trim() ? [value.trim()] : []
+  }
+
+  const parsed = safeParseJson<unknown>(value)
+  if (Array.isArray(parsed)) {
+    return ensureStringArray(parsed)
+  }
+
+  return []
 }
 
 export function ReportesClient({ beneficiarios }: ReportesClientProps) {
@@ -87,17 +114,24 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
 
     const todasSituaciones: string[] = []
     beneficiarios.forEach((b) => {
+      const salud = ensureStringArray(b.situaciones_salud)
+      const consumo = ensureStringArray(b.situaciones_consumo)
+      const entorno = ensureStringArray(b.situaciones_entorno)
+      const economicas = ensureStringArray(b.situaciones_economicas)
+      const legales = ensureStringArray(b.situaciones_legales)
+
       todasSituaciones.push(
-        ...(b.situaciones_salud || []),
-        ...(b.situaciones_consumo || []),
-        ...(b.situaciones_entorno || []),
-        ...(b.situaciones_economicas || []),
-        ...(b.situaciones_legales || []),
+        ...salud,
+        ...consumo,
+        ...entorno,
+        ...economicas,
+        ...legales,
       )
     })
 
     const situacionesCount = todasSituaciones.reduce(
       (acc, s) => {
+        if (!s) return acc
         acc[s] = (acc[s] || 0) + 1
         return acc
       },
@@ -110,16 +144,22 @@ export function ReportesClient({ beneficiarios }: ReportesClientProps) {
 
     const todasPeticiones: string[] = []
     beneficiarios.forEach((b) => {
+      const apoyo = ensureStringArray(b.peticiones_apoyo)
+      const necesidades = ensureStringArray(b.peticiones_necesidades)
+      const capacitacion = ensureStringArray(b.peticiones_capacitacion)
+      const asesoria = ensureStringArray(b.peticiones_asesoria)
+
       todasPeticiones.push(
-        ...(b.peticiones_apoyo || []),
-        ...(b.peticiones_necesidades || []),
-        ...(b.peticiones_capacitacion || []),
-        ...(b.peticiones_asesoria || []),
+        ...apoyo,
+        ...necesidades,
+        ...capacitacion,
+        ...asesoria,
       )
     })
 
     const peticionesCount = todasPeticiones.reduce(
       (acc, p) => {
+        if (!p) return acc
         acc[p] = (acc[p] || 0) + 1
         return acc
       },

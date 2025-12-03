@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { safeParseJson } from "@/lib/utils"
+import { cn, safeParseJson } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -77,6 +77,134 @@ interface Beneficiario {
 interface RegistrosClientProps {
   beneficiarios: Beneficiario[]
   error: any
+}
+
+type EmotionPalette = {
+  card: string
+  badge: string
+  indicator: string
+}
+
+type ParsedEmotion = {
+  label: string
+  palette: EmotionPalette
+}
+
+const defaultEmotionPalette: EmotionPalette = {
+  card: "border-l-4 border-l-transparent",
+  badge: "bg-purple-50 text-purple-700 border-purple-200",
+  indicator: "bg-muted-foreground/60",
+}
+
+const emotionPaletteEntries: Array<{ keys: string[]; palette: EmotionPalette }> = [
+  {
+    keys: ["Alegría", "Serenidad", "Éxtasis", "Felicidad", "Gozo"],
+    palette: {
+      card: "bg-yellow-50 border-l-4 border-l-yellow-500",
+      badge: "bg-yellow-100 text-yellow-900 border-yellow-300",
+      indicator: "bg-yellow-400",
+    },
+  },
+  {
+    keys: ["Confianza", "Aceptación", "Admiración", "Esperanza"],
+    palette: {
+      card: "bg-emerald-50 border-l-4 border-l-emerald-500",
+      badge: "bg-emerald-100 text-emerald-800 border-emerald-300",
+      indicator: "bg-emerald-400",
+    },
+  },
+  {
+    keys: ["Miedo", "Aprensión", "Terror", "Ansiedad", "Pánico"],
+    palette: {
+      card: "bg-green-50 border-l-4 border-l-green-700",
+      badge: "bg-green-100 text-green-800 border-green-300",
+      indicator: "bg-green-600",
+    },
+  },
+  {
+    keys: ["Sorpresa", "Distracción", "Asombro", "Confusión"],
+    palette: {
+      card: "bg-cyan-50 border-l-4 border-l-cyan-500",
+      badge: "bg-cyan-100 text-cyan-800 border-cyan-300",
+      indicator: "bg-cyan-500",
+    },
+  },
+  {
+    keys: ["Tristeza", "Pensativo", "Pena", "Soledad", "Melancolía"],
+    palette: {
+      card: "bg-blue-50 border-l-4 border-l-blue-600",
+      badge: "bg-blue-100 text-blue-800 border-blue-300",
+      indicator: "bg-blue-500",
+    },
+  },
+  {
+    keys: ["Disgusto", "Aburrimiento", "Aversión", "Rechazo"],
+    palette: {
+      card: "bg-purple-50 border-l-4 border-l-purple-600",
+      badge: "bg-purple-100 text-purple-800 border-purple-300",
+      indicator: "bg-purple-500",
+    },
+  },
+  {
+    keys: ["Ira", "Molestia", "Furia", "Rabia"],
+    palette: {
+      card: "bg-red-50 border-l-4 border-l-red-600",
+      badge: "bg-red-100 text-red-800 border-red-300",
+      indicator: "bg-red-500",
+    },
+  },
+  {
+    keys: ["Anticipación", "Interés", "Vigilancia", "Expectativa"],
+    palette: {
+      card: "bg-orange-50 border-l-4 border-l-orange-500",
+      badge: "bg-orange-100 text-orange-800 border-orange-300",
+      indicator: "bg-orange-500",
+    },
+  },
+]
+
+function normalizeEmotionKey(value?: string | null) {
+  if (!value) return ""
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
+}
+
+const emotionPaletteMap = new Map<string, EmotionPalette>()
+
+emotionPaletteEntries.forEach(({ keys, palette }) => {
+  keys.forEach((key) => {
+    emotionPaletteMap.set(normalizeEmotionKey(key), palette)
+  })
+})
+
+function getEmotionPalette(value?: string | null) {
+  if (!value) return defaultEmotionPalette
+  return emotionPaletteMap.get(normalizeEmotionKey(value)) ?? defaultEmotionPalette
+}
+
+function parseEmotionData(value: unknown): ParsedEmotion[] {
+  const parsedValue = Array.isArray(value) ? value : safeParseJson<unknown>(value)
+  const arrayValue = Array.isArray(parsedValue) ? parsedValue : []
+  const result: ParsedEmotion[] = []
+
+  arrayValue.forEach((item) => {
+    if (typeof item === "string") {
+      result.push({ label: item, palette: getEmotionPalette(item) })
+      return
+    }
+
+    if (item && typeof item === "object") {
+      const candidate = item as Record<string, unknown>
+      const emotionName = typeof candidate.emocion === "string" ? candidate.emocion : undefined
+      const intensity = typeof candidate.intensidad === "string" ? candidate.intensidad : undefined
+      const label = emotionName && intensity ? `${emotionName} (${intensity})` : intensity ?? emotionName
+
+      if (label) {
+        result.push({ label, palette: getEmotionPalette(emotionName ?? intensity) })
+      }
+    }
+  })
+
+  return result
 }
 
 export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: RegistrosClientProps) {
@@ -205,10 +333,8 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
       ) : (
         <div className="space-y-4">
           {filteredBeneficiarios.map((beneficiario: Beneficiario) => {
-            const emociones = (Array.isArray(beneficiario.emociones)
-              ? beneficiario.emociones
-              : safeParseJson<any[]>(beneficiario.emociones) || []
-            ).map(e => (typeof e === 'string' ? e : JSON.stringify(e))).filter(Boolean)
+            const emotionEntries = parseEmotionData(beneficiario.emociones as unknown)
+            const primaryPalette = emotionEntries[0]?.palette ?? defaultEmotionPalette
 
             const poblaciones_especiales = Array.isArray(beneficiario.poblaciones_especiales)
               ? (beneficiario.poblaciones_especiales as string[])
@@ -268,144 +394,144 @@ export function RegistrosClient({ beneficiarios: initialBeneficiarios, error }: 
                 : null
 
             return (
-              <Card key={beneficiario.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CardTitle className="text-xl">{beneficiario.nombre_apellido}</CardTitle>
-                      <Badge variant="outline">Caso #{beneficiario.caso_numero}</Badge>
-                      {beneficiario.tipo_contacto && (
-                        <Badge variant={beneficiario.tipo_contacto === "primer-contacto" ? "default" : "secondary"}>
-                          {beneficiario.tipo_contacto}
-                        </Badge>
-                      )}
-                    </div>
-                    <CardDescription className="flex flex-wrap gap-4 text-sm">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(beneficiario.fecha)} - {formatTime(beneficiario.hora)}
-                      </span>
-                      {beneficiario.telefono && (
+              <Card key={beneficiario.id} className={cn("hover:shadow-lg transition-shadow", primaryPalette.card)}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={cn("h-2.5 w-2.5 rounded-full", primaryPalette.indicator)} aria-hidden="true" />
+                        <CardTitle className="text-xl">{beneficiario.nombre_apellido}</CardTitle>
+                        <Badge variant="outline">Caso #{beneficiario.caso_numero}</Badge>
+                        {beneficiario.tipo_contacto && (
+                          <Badge variant={beneficiario.tipo_contacto === "primer-contacto" ? "default" : "secondary"}>
+                            {beneficiario.tipo_contacto}
+                          </Badge>
+                        )}
+                      </div>
+                      <CardDescription className="flex flex-wrap gap-4 text-sm">
                         <span className="flex items-center gap-1">
-                          <Phone className="h-4 w-4" />
-                          {beneficiario.telefono}
+                          <Calendar className="h-4 w-4" />
+                          {formatDate(beneficiario.fecha)} - {formatTime(beneficiario.hora)}
                         </span>
-                      )}
-                      {(beneficiario.localidad || beneficiario.barrio) && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {[beneficiario.localidad, beneficiario.barrio].filter(Boolean).join(", ")}
-                        </span>
-                      )}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleView(beneficiario)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(beneficiario)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteClick(beneficiario.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-semibold">Género:</span> {beneficiario.genero || "No especificado"}
-                  </div>
-                  <div>
-                    <span className="font-semibold">Forma de contacto:</span>{" "}
-                    {beneficiario.forma_contacto || "No especificado"}
-                  </div>
-                </div>
-
-                {apoyo_social_nivel && apoyo_social_puntaje !== null && (
-                  <div className="pt-2">
-                    <p className="font-semibold text-sm mb-1">Apoyo social percibido</p>
-                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                      {apoyo_social_nivel} · Puntaje {apoyo_social_puntaje}/15
-                    </Badge>
-                  </div>
-                )}
-
-                {emociones && emociones.length > 0 && (
-                  <div>
-                    <p className="font-semibold text-sm mb-2">Emociones identificadas:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {emociones.map((emocion: string) => (
-                        <Badge
-                          key={emocion}
-                          variant="secondary"
-                          className="bg-purple-50 text-purple-700 border-purple-200"
-                        >
-                          {emocion}
-                        </Badge>
-                      ))}
+                        {beneficiario.telefono && (
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-4 w-4" />
+                            {beneficiario.telefono}
+                          </span>
+                        )}
+                        {(beneficiario.localidad || beneficiario.barrio) && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            {[beneficiario.localidad, beneficiario.barrio].filter(Boolean).join(", ")}
+                          </span>
+                        )}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleView(beneficiario)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(beneficiario)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteClick(beneficiario.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
                     </div>
                   </div>
-                )}
-
-                {poblaciones_especiales && poblaciones_especiales.length > 0 && (
-                  <div>
-                    <p className="font-semibold text-sm mb-2">Poblaciones especiales:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {poblaciones_especiales.map((poblacion: string) => (
-                        <Badge key={poblacion} variant="secondary">
-                          {poblacion}
-                        </Badge>
-                      ))}
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-semibold">Género:</span> {beneficiario.genero || "No especificado"}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Forma de contacto:</span> {beneficiario.forma_contacto || "No especificado"}
                     </div>
                   </div>
-                )}
 
-                {situaciones_all.length > 0 && (
-                  <div>
-                    <p className="font-semibold text-sm mb-2">Situaciones presentes:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {situaciones_all.map((situacion: string, index: number) => (
-                        <Badge key={index} variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                          {situacion}
-                        </Badge>
-                      ))}
+                  {apoyo_social_nivel && apoyo_social_puntaje !== null && (
+                    <div className="pt-2">
+                      <p className="font-semibold text-sm mb-1">Apoyo social percibido</p>
+                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                        {apoyo_social_nivel} · Puntaje {apoyo_social_puntaje}/15
+                      </Badge>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {(peticiones_apoyo.length || peticiones_necesidades.length || peticiones_capacitacion.length || peticiones_asesoria.length) > 0 && (
-                  <div>
-                    <p className="font-semibold text-sm mb-2">Peticiones y necesidades:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {[...peticiones_apoyo, ...peticiones_necesidades, ...peticiones_capacitacion, ...peticiones_asesoria].map((peticion: string, index: number) => (
-                        <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          {peticion}
-                        </Badge>
-                      ))}
+                  {emotionEntries.length > 0 && (
+                    <div>
+                      <p className="font-semibold text-sm mb-2">Emociones identificadas:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {emotionEntries.map((emotion, index) => (
+                          <Badge
+                            key={`${emotion.label}-${index}`}
+                            variant="secondary"
+                            className={cn("border", emotion.palette.badge)}
+                          >
+                            {emotion.label}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {beneficiario.descripcion_caso && (
-                  <div className="pt-4 border-t">
-                    <p className="font-semibold text-sm mb-2">Descripción del caso:</p>
-                    <p className="text-sm text-muted-foreground">{beneficiario.descripcion_caso}</p>
-                  </div>
-                )}
+                  {poblaciones_especiales && poblaciones_especiales.length > 0 && (
+                    <div>
+                      <p className="font-semibold text-sm mb-2">Poblaciones especiales:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {poblaciones_especiales.map((poblacion: string) => (
+                          <Badge key={poblacion} variant="secondary">
+                            {poblacion}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                <div className="pt-4 border-t flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>
-                    Diligenciado por: <span className="font-medium">{beneficiario.nombre_diligencia}</span> (
-                    {beneficiario.rol_diligencia})
-                  </span>
-                </div>
-              </CardContent>
+                  {situaciones_all.length > 0 && (
+                    <div>
+                      <p className="font-semibold text-sm mb-2">Situaciones presentes:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {situaciones_all.map((situacion: string, index: number) => (
+                          <Badge key={index} variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                            {situacion}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(peticiones_apoyo.length || peticiones_necesidades.length || peticiones_capacitacion.length || peticiones_asesoria.length) > 0 && (
+                    <div>
+                      <p className="font-semibold text-sm mb-2">Peticiones y necesidades:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {[...peticiones_apoyo, ...peticiones_necesidades, ...peticiones_capacitacion, ...peticiones_asesoria].map((peticion: string, index: number) => (
+                          <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            {peticion}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {beneficiario.descripcion_caso && (
+                    <div className="pt-4 border-t">
+                      <p className="font-semibold text-sm mb-2">Descripción del caso:</p>
+                      <p className="text-sm text-muted-foreground">{beneficiario.descripcion_caso}</p>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t flex items-center gap-2 text-sm text-muted-foreground">
+                    <User className="h-4 w-4" />
+                    <span>
+                      Diligenciado por: <span className="font-medium">{beneficiario.nombre_diligencia}</span> (
+                      {beneficiario.rol_diligencia})
+                    </span>
+                  </div>
+                </CardContent>
               </Card>
-            );
+            )
           })}
         </div>
       )}

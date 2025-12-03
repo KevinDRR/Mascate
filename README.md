@@ -41,5 +41,28 @@ pnpm dev
 
 ## Notas
 - Los scripts originales estaban escritos para PostgreSQL/Supabase; se han convertido a MySQL compatible.
-- Si quieres revertir a Supabase, conserva los archivos en `lib/supabase` antes de borrarlos; actualmente se han eliminado para evitar confusión.
 - Para indexar campos dentro de JSON en MySQL, crea columnas generadas y añade índices sobre ellas.
+
+# Resumen
+
+## Dependecias
+npm install -g pnpm
+
+## Descargar todas las dependencias que el proyecto necesita
+pnpm install
+
+## Iniciar entorno
+venv\Scripts\Activate.ps1
+
+## Iniciar el proyecto
+npm run dev
+
+## Url de acceso
+http://localhost:3000
+-http://localhost:5500
+-http://localhost:3060
+
+
+pnpm install --frozen-lockfile; pnpm run build
+
+pnpm run start
