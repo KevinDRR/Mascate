@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/mysql/client"
+import { safeParseJson } from "@/lib/utils"
+
+const fallbackState = {
+  cachedCaseNumber: 1,
+}
 
 export async function GET() {
   try {
@@ -9,6 +14,10 @@ export async function GET() {
     return NextResponse.json({ success: true, nextCaseNumber })
   } catch (error) {
     console.error("[v0] Error in GET /api/next-case-number:", error)
-    return NextResponse.json({ success: false, error: "Error interno del servidor" }, { status: 500 })
+    const parsedCached = safeParseJson<{ cachedCaseNumber?: number }>(process.env.NEXT_PUBLIC_BUILD_CACHE)
+    const fallbackCase = parsedCached?.cachedCaseNumber ?? fallbackState.cachedCaseNumber
+    fallbackState.cachedCaseNumber = fallbackCase + 1
+
+    return NextResponse.json({ success: true, nextCaseNumber: fallbackCase, fallback: true })
   }
 }

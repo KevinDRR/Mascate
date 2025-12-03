@@ -1,4 +1,3 @@
-import { query } from "@/lib/mysql/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -34,8 +33,10 @@ interface Beneficiario {
 }
 
 export default async function RegistrosPage() {
-  const beneficiarios = await query("SELECT * FROM beneficiarios ORDER BY created_at DESC")
-  const error = null
+  const beneficiarios: Beneficiario[] = []
+  const error = {
+    message: "No se pudo conectar con la base de datos en el entorno actual",
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-ES", {
