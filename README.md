@@ -49,7 +49,7 @@ pnpm dev
 npm install -g pnpm
 
 ## Descargar todas las dependencias que el proyecto necesita
-pnpm install
+npm install
 
 ## Iniciar entorno
 venv\Scripts\Activate.ps1
