@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/client"
+import { getSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/client"
 
 function toNumberOrNull(value: unknown) {
   if (value === null || value === undefined || value === "") return null
@@ -13,6 +13,13 @@ function toArrayOrEmpty<T>(value: unknown): T[] {
 }
 
 export async function POST(request: Request) {
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json(
+      { error: "Supabase no está configurado en este entorno" },
+      { status: 503 },
+    )
+  }
+
   try {
     const data = await request.json()
     const supabase = getSupabaseServerClient()
@@ -87,6 +94,10 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ success: true, data: [], fallback: true })
+  }
+
   try {
     const supabase = getSupabaseServerClient()
     const { data, error } = await supabase

@@ -7,7 +7,7 @@ El proyecto está preparado para trabajar con Supabase como base de datos (Postg
 ## Configuración con Supabase
 
 1. Crea un proyecto en [Supabase](https://supabase.com/).
-2. Desde el **Table Editor** crea una tabla `beneficiarios` con los campos que usa la aplicación (puedes duplicar la estructura del proyecto anterior o pegar el esquema en el editor SQL de Supabase).
+2. Desde el **Table Editor** crea una tabla `beneficiarios` con los campos que usa la aplicación. Para acelerar este paso abre el **SQL Editor** de Supabase y pega el contenido de `supabase/schema.sql`; el script crea la tabla con todos los campos y extensiones necesarias.
 3. En el panel de **Project Settings → API** copia las claves:
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
@@ -21,7 +21,9 @@ SUPABASE_SERVICE_ROLE_KEY=<tu service role key>
 NEXT_DISABLE_DEV_INDICATORS=1
 ```
 
-5. Instala dependencias y ejecuta la app:
+5. (Opcional) Para contar con datos de ejemplo abre nuevamente el **SQL Editor** y ejecuta `supabase/seed.sql`, que inserta 10 beneficiarios ficticios.
+
+6. Instala dependencias y ejecuta la app:
 
 ```powershell
 pnpm install

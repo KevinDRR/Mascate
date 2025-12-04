@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/client"
+import { getSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/client"
 
 function toNumberOrNull(value: unknown) {
   if (value === null || value === undefined || value === "") return null
@@ -13,6 +13,10 @@ function toArrayOrEmpty<T>(value: unknown): T[] {
 }
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ success: true, data: null, fallback: true })
+  }
+
   try {
     const { id } = params
     const supabase = getSupabaseServerClient()
@@ -34,6 +38,13 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json(
+      { error: "Supabase no está configurado en este entorno" },
+      { status: 503 },
+    )
+  }
+
   try {
     const { id } = params
     const data = await request.json()
@@ -109,6 +120,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json(
+      { error: "Supabase no está configurado en este entorno" },
+      { status: 503 },
+    )
+  }
+
   try {
     const { id } = params
     const supabase = getSupabaseServerClient()

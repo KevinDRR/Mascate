@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Database, ArrowLeft } from "lucide-react"
 import { RegistrosClient } from "@/components/registros-client"
-import { getSupabaseServerClient } from "@/lib/supabase/client"
+import { getSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/client"
 
 interface Beneficiario {
   id: string
@@ -40,21 +40,25 @@ export default async function RegistrosPage() {
   let beneficiarios: Beneficiario[] = []
   let error: { message: string } | null = null
 
-  try {
-    const supabase = getSupabaseServerClient()
-    const { data, error: fetchError } = await supabase
-      .from<Beneficiario>("beneficiarios")
-      .select("*")
-      .order("created_at", { ascending: false })
+  if (!isSupabaseConfigured()) {
+    error = { message: "Supabase no está configurado en este entorno" }
+  } else {
+    try {
+      const supabase = getSupabaseServerClient()
+      const { data, error: fetchError } = await supabase
+        .from<Beneficiario>("beneficiarios")
+        .select("*")
+        .order("created_at", { ascending: false })
 
-    if (fetchError) {
-      throw fetchError
+      if (fetchError) {
+        throw fetchError
+      }
+
+      beneficiarios = data ?? []
+    } catch (err) {
+      console.error("[v0] Error fetching beneficiarios for registros:", err)
+      error = { message: "No se pudo obtener la información desde Supabase" }
     }
-
-    beneficiarios = data ?? []
-  } catch (err) {
-    console.error("[v0] Error fetching beneficiarios for registros:", err)
-    error = { message: "No se pudo obtener la información desde Supabase" }
   }
 
   return (

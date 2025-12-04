@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server"
-import { getSupabaseServerClient } from "@/lib/supabase/client"
+import { getSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/client"
 
 export async function GET() {
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ success: true, nextCaseNumber: 1, fallback: true })
+  }
+
   try {
     const supabase = getSupabaseServerClient()
     const { data, error } = await supabase

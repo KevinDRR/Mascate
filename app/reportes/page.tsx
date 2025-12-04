@@ -2,12 +2,30 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { ReportesClient } from "@/components/reportes-client"
-import { getSupabaseServerClient } from "@/lib/supabase/client"
+import { getSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/client"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export default async function ReportesPage() {
+  if (!isSupabaseConfigured()) {
+    return (
+      <main className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center max-w-2xl mx-auto">
+            <h1 className="text-3xl font-bold text-foreground mb-4">Datos no disponibles</h1>
+            <p className="text-muted-foreground mb-6">
+              Supabase no está configurado en este entorno, por lo que no se pueden mostrar estadísticas.
+            </p>
+            <Button asChild>
+              <Link href="/">Volver al formulario</Link>
+            </Button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
   try {
     const supabase = getSupabaseServerClient()
     const { data, error } = await supabase
