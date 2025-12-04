@@ -1,18 +1,22 @@
-import { query } from "@/lib/mysql/client"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { ReportesClient } from "@/components/reportes-client"
+import { getSupabaseServerClient } from "@/lib/supabase/client"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export default async function ReportesPage() {
   try {
-    const beneficiarios = await query("SELECT * FROM beneficiarios ORDER BY created_at DESC")
+    const supabase = getSupabaseServerClient()
+    const { data, error } = await supabase
+      .from("beneficiarios")
+      .select("*")
+      .order("created_at", { ascending: false })
 
-    if (!beneficiarios) {
-      throw new Error("Empty beneficiarios result")
+    if (error) {
+      throw error
     }
 
     return (
@@ -35,8 +39,7 @@ export default async function ReportesPage() {
               Análisis y estadísticas de los beneficiarios registrados
             </p>
           </div>
-
-          <ReportesClient beneficiarios={beneficiarios} />
+          <ReportesClient beneficiarios={data ?? []} />
         </div>
       </main>
     )

@@ -1,68 +1,46 @@
+pnpm install --frozen-lockfile; pnpm run build
+pnpm run start
 # formulario-beneficiarios
 
-Proyecto migrado para usar MySQL (XAMPP) en local en lugar de Supabase.
+El proyecto está preparado para trabajar con Supabase como base de datos (PostgreSQL administrado).
 
-## Configuración local (XAMPP / MySQL)
+## Configuración con Supabase
 
-1. Instala XAMPP e inicia Apache y MySQL.
-2. Crea la base de datos (puedes usar phpMyAdmin o la CLI): por ejemplo `beneficiarios`.
-3. Ejecuta los scripts SQL en la carpeta `scripts/` en este orden:
-   - `001_create_beneficiarios_table.sql`
-   - `002_add_emociones_column.sql`
-   - `003_insert_sample_beneficiarios.sql` (opcional)
-
-   Puedes importarlos desde phpMyAdmin o con la CLI:
-
-```powershell
-# Ajusta usuario/contraseña si es necesario
-mysql -u root -p < .\scripts\001_create_beneficiarios_table.sql
-mysql -u root -p < .\scripts\002_add_emociones_column.sql
-mysql -u root -p < .\scripts\003_insert_sample_beneficiarios.sql
-```
-
-4. Configura tus variables de entorno locales creando `.env.local` (NO subirlo a git):
+1. Crea un proyecto en [Supabase](https://supabase.com/).
+2. Desde el **Table Editor** crea una tabla `beneficiarios` con los campos que usa la aplicación (puedes duplicar la estructura del proyecto anterior o pegar el esquema en el editor SQL de Supabase).
+3. En el panel de **Project Settings → API** copia las claves:
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+4. Crea tu archivo `.env.local` (no lo subas a git) con:
 
 ```
-MYSQL_HOST=127.0.0.1
-MYSQL_PORT=3306
-MYSQL_USER=root
-MYSQL_PASSWORD=
-MYSQL_DATABASE=beneficiarios
+SUPABASE_URL=<https://xxxxx.supabase.co>
+SUPABASE_ANON_KEY=<tu anon key>
+SUPABASE_SERVICE_ROLE_KEY=<tu service role key>
+NEXT_DISABLE_DEV_INDICATORS=1
 ```
 
-5. Instala dependencias y arranca la app:
+5. Instala dependencias y ejecuta la app:
 
 ```powershell
 pnpm install
 pnpm dev
 ```
 
-(si usas npm/yarn sustituye los comandos correspondientes).
+Para producción (por ejemplo en Render) utiliza:
 
-## Notas
-- Los scripts originales estaban escritos para PostgreSQL/Supabase; se han convertido a MySQL compatible.
-- Para indexar campos dentro de JSON en MySQL, crea columnas generadas y añade índices sobre ellas.
+```bash
+pnpm install && pnpm run build
+pnpm run start
+```
 
 # Resumen
 
-## Dependecias
-npm install -g pnpm
+- Instalación de pnpm global (opcional): `npm install -g pnpm`
+- Instalar dependencias del proyecto: `pnpm install`
+- Ejecutar en desarrollo: `pnpm dev`
+- Construir la aplicación: `pnpm run build`
+- Arrancar en modo producción: `pnpm run start`
 
-## Descargar todas las dependencias que el proyecto necesita
-npm install
-
-## Iniciar entorno
-venv\Scripts\Activate.ps1
-
-## Iniciar el proyecto
-npm run dev
-
-## Url de acceso
-http://localhost:3000
--http://localhost:5500
--http://localhost:3060
-
-
-pnpm install --frozen-lockfile; pnpm run build
-
-pnpm run start
+Acceso local por defecto: `http://localhost:3000`

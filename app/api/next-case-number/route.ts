@@ -1,23 +1,34 @@
 import { NextResponse } from "next/server"
-import { query } from "@/lib/mysql/client"
-import { safeParseJson } from "@/lib/utils"
-
-const fallbackState = {
-  cachedCaseNumber: 1,
-}
+import { getSupabaseServerClient } from "@/lib/supabase/client"
 
 export async function GET() {
   try {
-    const rows = await query("SELECT caso_numero FROM beneficiarios ORDER BY CAST(caso_numero AS UNSIGNED) DESC LIMIT 1")
-    const nextCaseNumber = rows && rows.length > 0 ? Number.parseInt(rows[0].caso_numero) + 1 : 1
+    const supabase = getSupabaseServerClient()
+    const { data, error } = await supabase
+      .from("beneficiarios")
+      .select("caso_numero")
+      .order("caso_numero", { ascending: false })
+      .limit(1)
+
+    if (error) {
+      throw error
+    }
+
+    let nextCaseNumber = 1
+    const currentCase = data?.[0]?.caso_numero
+
+    if (typeof currentCase === "number") {
+      nextCaseNumber = currentCase + 1
+    } else if (typeof currentCase === "string") {
+      const parsed = Number.parseInt(currentCase, 10)
+      if (!Number.isNaN(parsed)) {
+        nextCaseNumber = parsed + 1
+      }
+    }
 
     return NextResponse.json({ success: true, nextCaseNumber })
   } catch (error) {
     console.error("[v0] Error in GET /api/next-case-number:", error)
-    const parsedCached = safeParseJson<{ cachedCaseNumber?: number }>(process.env.NEXT_PUBLIC_BUILD_CACHE)
-    const fallbackCase = parsedCached?.cachedCaseNumber ?? fallbackState.cachedCaseNumber
-    fallbackState.cachedCaseNumber = fallbackCase + 1
-
-    return NextResponse.json({ success: true, nextCaseNumber: fallbackCase, fallback: true })
+    return NextResponse.json({ success: true, nextCaseNumber: 1, fallback: true })
   }
 }

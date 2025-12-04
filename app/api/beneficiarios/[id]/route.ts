@@ -1,11 +1,32 @@
 import { NextResponse } from "next/server"
-import { query } from "@/lib/mysql/client"
+import { getSupabaseServerClient } from "@/lib/supabase/client"
+
+function toNumberOrNull(value: unknown) {
+  if (value === null || value === undefined || value === "") return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function toArrayOrEmpty<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value as T[]
+  return []
+}
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    const rows = await query("SELECT * FROM beneficiarios WHERE id = ? LIMIT 1", [id])
-    return NextResponse.json({ success: true, data: rows[0] ?? null })
+    const supabase = getSupabaseServerClient()
+    const { data, error } = await supabase
+      .from("beneficiarios")
+      .select("*")
+      .eq("id", id)
+      .single()
+
+    if (error && error.code !== "PGRST116") {
+      throw error
+    }
+
+    return NextResponse.json({ success: true, data: data ?? null })
   } catch (error) {
     console.error("[v0] Error in GET /api/beneficiarios/[id]:", error)
     return NextResponse.json({ error: "Error al obtener el beneficiario" }, { status: 500 })
@@ -40,15 +61,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       estado_civil: data.estadoCivil,
       numero_hijos: data.numeroHijos,
       convive_con: data.conviveCon,
-      apoyo_social_personas: data.apoyoSocialPersonas ? Number(data.apoyoSocialPersonas) : null,
-      apoyo_social_interes: data.apoyoSocialInteres ? Number(data.apoyoSocialInteres) : null,
-      apoyo_social_vecinos: data.apoyoSocialAyudaVecinos ? Number(data.apoyoSocialAyudaVecinos) : null,
-      apoyo_social_puntaje:
-        typeof data.apoyoSocialPuntaje === "number"
-          ? data.apoyoSocialPuntaje
-          : data.apoyoSocialPuntaje
-            ? Number(data.apoyoSocialPuntaje)
-            : null,
+      apoyo_social_personas: toNumberOrNull(data.apoyoSocialPersonas),
+      apoyo_social_interes: toNumberOrNull(data.apoyoSocialInteres),
+      apoyo_social_vecinos: toNumberOrNull(data.apoyoSocialAyudaVecinos),
+      apoyo_social_puntaje: toNumberOrNull(data.apoyoSocialPuntaje),
       apoyo_social_nivel: data.apoyoSocialNivel || null,
       escolaridad: data.escolaridad,
       usa_computador: data.usaComputador,
@@ -58,41 +74,34 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       cual_deporte: data.cualDeporte,
       participacion_comunitaria: data.participacionComunitaria,
       ha_participado: data.haParticipado,
-      situaciones_salud: data.situacionesSalud,
-      situaciones_consumo: data.situacionesConsumo,
-      situaciones_entorno: data.situacionesEntorno,
-      situaciones_economicas: data.situacionesEconomicas,
-      situaciones_legales: data.situacionesLegales,
-      peticiones_apoyo: data.peticionesApoyo,
-      peticiones_necesidades: data.peticionesNecesidades,
-      peticiones_capacitacion: data.peticionesCapacitacion,
-      peticiones_asesoria: data.peticionesAsesoria,
+      situaciones_salud: toArrayOrEmpty<string>(data.situacionesSalud),
+      situaciones_consumo: toArrayOrEmpty<string>(data.situacionesConsumo),
+      situaciones_entorno: toArrayOrEmpty<string>(data.situacionesEntorno),
+      situaciones_economicas: toArrayOrEmpty<string>(data.situacionesEconomicas),
+      situaciones_legales: toArrayOrEmpty<string>(data.situacionesLegales),
+      peticiones_apoyo: toArrayOrEmpty<string>(data.peticionesApoyo),
+      peticiones_necesidades: toArrayOrEmpty<string>(data.peticionesNecesidades),
+      peticiones_capacitacion: toArrayOrEmpty<string>(data.peticionesCapacitacion),
+      peticiones_asesoria: toArrayOrEmpty<string>(data.peticionesAsesoria),
       descripcion_caso: data.descripcionCaso,
       nombre_diligencia: data.nombreDiligencia,
       rol_diligencia: data.rolDiligencia,
       telefono_diligencia: data.telefonoDiligencia,
-      emociones: data.emociones,
+      emociones: toArrayOrEmpty<string | Record<string, unknown>>(data.emociones),
+    }
+    const supabase = getSupabaseServerClient()
+    const { data: updated, error } = await supabase
+      .from("beneficiarios")
+      .update(fields)
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) {
+      throw error
     }
 
-    const setClauses: string[] = []
-    const values: any[] = []
-    Object.entries(fields).forEach(([key, val]) => {
-      if (typeof val !== "undefined") {
-        setClauses.push(`${key} = ?`)
-        values.push(val)
-      }
-    })
-
-    if (setClauses.length === 0) {
-      return NextResponse.json({ success: true, data: null })
-    }
-
-    const sql = `UPDATE beneficiarios SET ${setClauses.join(", ")} WHERE id = ?`
-    values.push(id)
-
-    await query(sql, values)
-    const updated = await query("SELECT * FROM beneficiarios WHERE id = ? LIMIT 1", [id])
-    return NextResponse.json({ success: true, data: updated[0] ?? null })
+    return NextResponse.json({ success: true, data: updated ?? null })
   } catch (error) {
     console.error("[v0] Error in PUT /api/beneficiarios/[id]:", error)
     return NextResponse.json({ error: "Error al actualizar el beneficiario" }, { status: 500 })
@@ -102,7 +111,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    await query("DELETE FROM beneficiarios WHERE id = ?", [id])
+    const supabase = getSupabaseServerClient()
+    const { error } = await supabase.from("beneficiarios").delete().eq("id", id)
+
+    if (error) {
+      throw error
+    }
+
     return NextResponse.json({ success: true, message: "Beneficiario eliminado exitosamente" })
   } catch (error) {
     console.error("[v0] Error in DELETE /api/beneficiarios/[id]:", error)

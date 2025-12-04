@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Database, ArrowLeft } from "lucide-react"
 import { RegistrosClient } from "@/components/registros-client"
+import { getSupabaseServerClient } from "@/lib/supabase/client"
 
 interface Beneficiario {
   id: string
@@ -32,22 +33,28 @@ interface Beneficiario {
   peticiones_asesoria: string[]
 }
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export default async function RegistrosPage() {
-  const beneficiarios: Beneficiario[] = []
-  const error = {
-    message: "No se pudo conectar con la base de datos en el entorno actual",
-  }
+  let beneficiarios: Beneficiario[] = []
+  let error: { message: string } | null = null
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  }
+  try {
+    const supabase = getSupabaseServerClient()
+    const { data, error: fetchError } = await supabase
+      .from<Beneficiario>("beneficiarios")
+      .select("*")
+      .order("created_at", { ascending: false })
 
-  const formatTime = (timeString: string) => {
-    return timeString.slice(0, 5)
+    if (fetchError) {
+      throw fetchError
+    }
+
+    beneficiarios = data ?? []
+  } catch (err) {
+    console.error("[v0] Error fetching beneficiarios for registros:", err)
+    error = { message: "No se pudo obtener la información desde Supabase" }
   }
 
   return (
@@ -99,7 +106,7 @@ export default async function RegistrosPage() {
           </Card>
         </div>
 
-        <RegistrosClient beneficiarios={beneficiarios || []} error={error} />
+        <RegistrosClient beneficiarios={beneficiarios} error={error} />
       </div>
     </div>
   )
